@@ -133,6 +133,8 @@ def get_clearance(context, box, direction, collapsed_margin=0):
 
     # Box should be after shape that’s broken on this page.
     for broken_shape in context.broken_out_of_flow:
+        if broken_shape is box:
+            continue
         if broken_shape.is_floated():
             if clear(box.style['clear'], broken_shape.style['float']):
                 return maxsize

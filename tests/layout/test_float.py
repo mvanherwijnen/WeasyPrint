@@ -1,8 +1,11 @@
 """Tests for floating boxes layout."""
 
+from types import SimpleNamespace
+
 import pytest
 
 from weasyprint.formatting_structure import boxes
+from weasyprint.layout.float import get_clearance
 
 from ..testing_utils import assert_no_logs, render_pages
 
@@ -11,6 +14,20 @@ def outer_area(box):
     """Return the (x, y, w, h) rectangle for the outer area of a box."""
     return (box.position_x, box.position_y,
             box.margin_width(), box.margin_height())
+
+
+@assert_no_logs
+def test_broken_float_does_not_clear_itself():
+    page, = render_pages('''
+      <div style="clear: right; float: right">float</div>
+    ''')
+    html, = page.children
+    body, = html.children
+    float_box, = body.children
+    context = SimpleNamespace(
+        broken_out_of_flow={float_box: ()}, excluded_shapes=[])
+
+    assert get_clearance(context, float_box, 'ltr') is None
 
 
 @assert_no_logs
