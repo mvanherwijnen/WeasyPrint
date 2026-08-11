@@ -1,5 +1,7 @@
 """Absolutely positioned boxes management."""
 
+from math import inf
+
 from ..formatting_structure import boxes
 from .min_max import handle_min_max_width
 from .percent import resolve_percentages, resolve_position_percentages
@@ -191,6 +193,12 @@ def absolute_block(context, box, containing_block, fixed_boxes, bottom_space,
             box, context, cb_x, cb_y, cb_width, cb_height)
 
     bottom_space += -box.position_y if translate_box_height else translate_y
+
+    # Absolutely positioned monolithic boxes must not fragment their contents.
+    # In particular, descendants of fixed-height overflow-clipped boxes must
+    # stay in the box's stacking context instead of resuming at page level.
+    if box.is_monolithic():
+        bottom_space = -inf
 
     # This box is the containing block for absolute descendants.
     absolute_boxes = []
