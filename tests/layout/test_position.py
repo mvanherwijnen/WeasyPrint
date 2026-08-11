@@ -378,6 +378,78 @@ def test_fixed_positioning():
 
 
 @assert_no_logs
+def test_absolute_in_monolithic_absolute_does_not_break():
+    """Keep clipped absolute descendants in their transformed parent."""
+    page_1, page_2 = render_pages('''
+      <style>
+        @page { size: 900px 500px; margin: 20px }
+        body { margin: 0 }
+        .lead { height: 330px }
+        .step { position: relative; width: 860px }
+        .aside { position: absolute; left: 0; top: 0; width: 200px }
+        .thumbnail {
+          position: relative;
+          overflow: hidden;
+          width: 200px;
+          height: 112px;
+        }
+        .scene {
+          position: absolute;
+          left: 0;
+          top: 0;
+          overflow: hidden;
+          width: 800px;
+          height: 450px;
+          transform: scale(.25);
+          transform-origin: top left;
+        }
+        .element {
+          position: absolute;
+          left: 130px;
+          top: 90px;
+          width: 600px;
+          height: 240px;
+        }
+        .notes { margin-left: 240px }
+        .forced-break { break-before: page }
+      </style>
+      <div class="lead"></div>
+      <div class="step">
+        <div class="aside">
+          <div class="thumbnail">
+            <div class="scene">
+              <div class="element">
+                01<br>02<br>03<br>04<br>05<br>06<br>07<br>08<br>
+                09<br>10<br>11<br>12<br>13<br>14<br>15<br>16
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="notes">
+          Before
+          <p class="forced-break">After</p>
+        </div>
+      </div>
+    ''')
+
+    html_1, = page_1.children
+    body_1, = html_1.children
+    lead, step_1 = body_1.children
+    aside, notes_1 = step_1.children
+    thumbnail, = aside.children
+    scene, = thumbnail.children
+    element, = scene.children
+    assert element.element.get('class') == 'element'
+
+    html_2, = page_2.children
+    body_2, = html_2.children
+    step_2, = body_2.children
+    notes_2, = step_2.children
+    paragraph, = notes_2.children
+    assert paragraph.element.get('class') == 'forced-break'
+
+
+@assert_no_logs
 def test_fixed_positioning_regression_1():
     # Regression test for #641.
     page_1, page_2 = render_pages('''
